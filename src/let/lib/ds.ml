@@ -2,12 +2,16 @@
 
 (* expressed values and environments are defined mutually recursively *)
 
+type 'a tree = Empty | Node of 'a * 'a tree * 'a tree
 
 type exp_val =
   | NumVal of int
   | BoolVal of bool
   | PairVal of exp_val*exp_val
   | TupleVal of exp_val list
+  | ListVal of exp_val list
+  | TreeVal of exp_val tree
+  | RecordVal of (string*exp_val) list
 type env =
   | EmptyEnv
   | ExtendEnv of string*exp_val*env
@@ -106,6 +110,10 @@ let list_of_tupleVal : exp_val -> (exp_val list)  ea_result =  function
 let pair_of_pairVal : exp_val -> (exp_val*exp_val) ea_result =  function
   |  PairVal(ev1,ev2) -> return (ev1,ev2)
   | _ -> error "Expected a pair!"
+
+let rec record_of_recordVal = function
+  | RecordVal r -> return r
+  | _ -> error "Expected a record!"
            
 let rec string_of_expval = function
   | NumVal n -> "NumVal " ^ string_of_int n
@@ -123,3 +131,13 @@ let string_of_env : string ea_result =
   match env with
   | EmptyEnv -> Ok ">>Environment:\nEmpty"
   | _ -> Ok (">>Environment:\n"^ string_of_env' [] env)
+
+let rec get_exprs l = 
+  match l with
+  | [] -> []
+  | (_, (_, expression)) :: t -> expression :: get_exprs t
+
+let rec find_value id rcrd = 
+  match rcrd with 
+  | [] -> None
+  | (f,v) :: t -> if f=id then Some v else find_value id t
