@@ -56,7 +56,34 @@ declaration")
     string_of_tenv >>= fun str ->
     print_endline str;
     error "Debug: reached breakpoint"
-  | _ -> failwith "chk_expr: implement"    
+  | Record([]) ->
+    error "record: empty record"
+  | Record(fs) ->
+    let (ids, bes) = List.split fs
+    in let (_bs, es) = List.split bes
+    in 
+    if List.length (List.sort_uniq
+      compare ids) = List.length ids
+    then chk_exprs es >>= fun ts ->
+      return (RecordType (List.combine ids ts))
+    else error "record: duplicate fields"
+  | Proj(e, id) ->
+    chk_expr e >>= fun te -> 
+    (match te with
+    | RecordType fts ->
+      (match List.assoc_opt id fts with
+      | Some t -> return t
+      | None -> error "proj: field does not exist")
+    | _ -> error "proj: target not a record")
+  | _ -> failwith "chk_expr: implement"
+and
+  chk_exprs es = 
+  match es with 
+  | [] -> return [] 
+  | h::t -> 
+    chk_expr h >>= fun th -> 
+    chk_exprs t >>= fun l -> 
+    return (th::l) 
 and
   chk_prog (AProg(_,e)) =
   chk_expr e

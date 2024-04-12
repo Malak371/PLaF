@@ -1,7 +1,6 @@
 (* This file defines expressed values and environments *)
 open Parser_plaf.Ast
 
-
 (* expressed values and environments are defined mutually recursively *)
 
 type exp_val =
@@ -11,6 +10,7 @@ type exp_val =
   | PairVal of exp_val*exp_val
   | TupleVal of exp_val list
   | RecordVal of (string*(bool*exp_val)) list
+  | SetField of exp_val * string * exp_val
   | UnitVal
   | RefVal of int
 and
